@@ -19,8 +19,9 @@ fn bufSetGreaterThan(_: void, lhs: std.BufSet, rhs: std.BufSet) bool {
 }
 
 fn generatePerfectHash(allocator: std.mem.Allocator, keys: []const []const u8) !void {
-    const r = std.math.sqrt(keys.len);
     const e = 2;
+    const m = keys.len * (1 + e);
+    const r = std.math.sqrt(m);
 
     const buckets = try allocator.alloc(std.BufSet, r);
     defer allocator.free(buckets);
@@ -39,7 +40,7 @@ fn generatePerfectHash(allocator: std.mem.Allocator, keys: []const []const u8) !
     @memset(E, 0);
     defer allocator.free(E);
 
-    var T = try allocator.alloc(bool, keys.len * (1 + e));
+    var T = try allocator.alloc(bool, m);
     @memset(T, false);
     defer allocator.free(T);
 
