@@ -1,7 +1,7 @@
 const std = @import("std");
 const Hash = std.hash.XxHash32;
 
-const keys: [10][]const u8 = .{
+const example_keys: [10][]const u8 = .{
     "foo",
     "bar",
     "baz",
@@ -18,8 +18,10 @@ fn bufSetGreaterThan(_: void, lhs: std.BufSet, rhs: std.BufSet) bool {
     return lhs.count() > rhs.count();
 }
 
-fn generatePerfectHash(allocator: std.mem.Allocator) !void {
+fn generatePerfectHash(allocator: std.mem.Allocator, keys: []const []const u8) !void {
     const r = std.math.sqrt(keys.len);
+    const e = 2;
+
     const buckets = try allocator.alloc(std.BufSet, r);
     defer allocator.free(buckets);
     for (buckets) |*bucket| {
@@ -33,19 +35,21 @@ fn generatePerfectHash(allocator: std.mem.Allocator) !void {
 
     std.mem.sort(std.BufSet, buckets, {}, bufSetGreaterThan);
 
-    var E = try allocator.alloc(usize, buckets.len);
+    var E = try allocator.alloc(u8, buckets.len);
     @memset(E, 0);
     defer allocator.free(E);
 
-    var T = try allocator.alloc(usize, keys.len * 3);
-    @memset(T, 0);
+    var T = try allocator.alloc(bool, keys.len * (1 + e));
+    @memset(T, false);
     defer allocator.free(T);
 
-    for (0.., buckets) |B_i, B| {
-        l_loop: for (1..1000) |l| {
-            var K = try allocator.alloc(u32, keys.len);
+    var K = try allocator.alloc(u32, keys.len);
+    defer allocator.free(K);
+
+    for (0.., buckets) |i, *B| {
+        defer B.deinit();
+        l_loop: for (1..std.math.maxInt(u8) + 1) |l| {
             @memset(K, 0);
-            defer allocator.free(K);
             var B_iter = B.iterator();
             while (B_iter.next()) |elem| {
                 var D = Hash.init(0);
@@ -53,32 +57,20 @@ fn generatePerfectHash(allocator: std.mem.Allocator) !void {
                 D.update(&[_]u8{@intCast(l)});
                 const hash = D.final();
 
-                std.debug.print(". {d} {d}\n", .{ hash % K.len, hash });
-                if (T[hash % T.len] != 0) {
-                    std.debug.print(": retry\n", .{});
+                if (T[hash % T.len]) {
                     continue :l_loop;
                 }
                 K[hash % K.len] = hash;
             }
-            std.debug.print("--- {d} {d} {d}\n", .{
-                B.count(),
-                K.len,
-                std.mem.count(u32, K, &.{0}),
-            });
 
             if (!std.mem.containsAtLeast(u32, K, K.len - B.count() + 1, &.{0})) {
-                E[B_i] = l;
+                E[i] = @intCast(l);
                 for (K) |j| {
-                    T[j % T.len] = 1;
+                    T[j % T.len] = true;
                 }
                 break;
             }
         }
-        std.debug.print(": {d}\n", .{B.count()});
-    }
-
-    for (buckets) |*bucket| {
-        bucket.deinit();
     }
 }
 
@@ -87,5 +79,5 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     defer std.debug.assert(gpa.deinit() == .ok);
 
-    try generatePerfectHash(allocator);
+    try generatePerfectHash(allocator, &example_keys);
 }
