@@ -108,10 +108,6 @@ pub const PerfectHash = struct {
 
         return @intCast(D.final() % self.m);
     }
-
-    // pub fn unhash(self: *PerfectHash, value: u32) anyerror![]const u8 {
-    //     return self.T[value];
-    // }
 };
 
 pub fn main() !void {
