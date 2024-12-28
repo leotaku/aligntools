@@ -101,13 +101,12 @@ pub const PerfectHash = struct {
         self.allocator.free(self.E);
     }
 
-    pub fn hash(self: *PerfectHash, key: []const u8) !u32 {
-        var acc = Hash.init(0);
-        acc.update(key);
-        const l = self.E[acc.final() % self.E.len];
-        acc.update(&[_]u8{l});
+    pub fn hash(self: *PerfectHash, key: []const u8) u32 {
+        var D = Hash.init(0);
+        D.update(key);
+        D.update(&[_]u8{self.E[D.final() % self.E.len]});
 
-        return @intCast(acc.final() % self.m);
+        return @intCast(D.final() % self.m);
     }
 
     // pub fn unhash(self: *PerfectHash, value: u32) anyerror![]const u8 {
@@ -124,6 +123,6 @@ pub fn main() !void {
     defer ph.deinit();
 
     for (example_keys) |key| {
-        std.debug.print("{s} = {d}\n", .{ key, try ph.hash(key) });
+        std.debug.print("{s} => {d}\n", .{ key, ph.hash(key) });
     }
 }
