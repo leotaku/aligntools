@@ -18,11 +18,7 @@ fn bufSetGreaterThan(_: void, lhs: std.BufSet, rhs: std.BufSet) bool {
     return lhs.count() > rhs.count();
 }
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer std.debug.assert(gpa.deinit() == .ok);
-
+fn generatePerfectHash(allocator: std.mem.Allocator) !void {
     const r = std.math.sqrt(keys.len);
     const buckets = try allocator.alloc(std.BufSet, r);
     defer allocator.free(buckets);
@@ -84,4 +80,12 @@ pub fn main() !void {
     for (buckets) |*bucket| {
         bucket.deinit();
     }
+}
+
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer std.debug.assert(gpa.deinit() == .ok);
+
+    try generatePerfectHash(allocator);
 }
