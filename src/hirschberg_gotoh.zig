@@ -72,6 +72,21 @@ pub const Edit = union(enum) {
     replace: []const u8,
 };
 
+fn coalescing_append(list: *std.ArrayList(Edit), edit: Edit) !void {
+    if (list.items.len == 0) return try list.append(edit);
+    const last: *Edit = &list.items[list.items.len - 1];
+
+    if (std.meta.activeTag(last.*) != std.meta.activeTag(edit)) {
+        return try list.append(edit);
+    }
+
+    switch (edit) {
+        .delete => last.*.delete.len += edit.delete.len,
+        .insert => last.*.insert.len += edit.insert.len,
+        .replace => last.*.replace.len += edit.replace.len,
+    }
+}
+
 pub fn transform(allocator: std.mem.Allocator, A: []const u8, B: []const u8) !std.ArrayList(Edit) {
     const CC = try allocator.alloc(usize, B.len + 1);
     defer allocator.free(CC);
@@ -102,9 +117,9 @@ fn adaptive_transform(
     edits: *std.ArrayList(Edit),
 ) !void {
     if (B.len == 0) {
-        if (A.len > 0) try edits.append(Edit{ .delete = A[0..] });
+        if (A.len > 0) try coalescing_append(edits, Edit{ .delete = A[0..] });
     } else switch (A.len) {
-        0 => try edits.append(Edit{ .insert = B[0..] }),
+        0 => try coalescing_append(edits, Edit{ .insert = B[0..] }),
         1 => {
             const default_cost = @min(tb, te) + h + (B.len * h + g);
             var @"j*": usize = undefined;
@@ -118,11 +133,11 @@ fn adaptive_transform(
             }
 
             if (min_replace_cost < default_cost) {
-                if (@"j*" >= 1) try edits.append(Edit{ .insert = B[0..@"j*"] });
-                try edits.append(Edit{ .replace = B[@"j*" .. @"j*" + 1] });
-                if (B.len - @"j*" > 1) try edits.append(Edit{ .insert = B[@"j*" + 1 ..] });
+                if (@"j*" >= 1) try coalescing_append(edits, Edit{ .insert = B[0..@"j*"] });
+                try coalescing_append(edits, Edit{ .replace = B[@"j*" .. @"j*" + 1] });
+                if (B.len - @"j*" > 1) try coalescing_append(edits, Edit{ .insert = B[@"j*" + 1 ..] });
             } else {
-                try edits.append(Edit{ .insert = B[0..] });
+                try coalescing_append(edits, Edit{ .insert = B[0..] });
             }
         },
         else => {
@@ -147,7 +162,7 @@ fn adaptive_transform(
                 try adaptive_transform(A[@"i*"..], B[@"j*"..], CC, DD, RR, SS, g, te, edits);
             } else {
                 try adaptive_transform(A[0 .. @"i*" - 1], B[0..@"j*"], CC, DD, RR, SS, tb, 0, edits);
-                try edits.append(Edit{ .delete = A[@"i*" .. @"i*" + 2] });
+                try coalescing_append(edits, Edit{ .delete = A[@"i*" .. @"i*" + 2] });
                 try adaptive_transform(A[@"i*" + 1 ..], B[@"j*" + 1 ..], CC, DD, RR, SS, 0, te, edits);
             }
         },
