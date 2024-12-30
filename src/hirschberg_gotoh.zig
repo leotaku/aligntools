@@ -65,3 +65,91 @@ fn adaptive_cost(
 
     return CC[B.len];
 }
+
+pub const Edit = union(enum) {
+    insert: []const u8,
+    delete: []const u8,
+    replace: []const u8,
+};
+
+pub fn transform(allocator: std.mem.Allocator, A: []const u8, B: []const u8) !std.ArrayList(Edit) {
+    const CC = try allocator.alloc(usize, B.len + 1);
+    defer allocator.free(CC);
+
+    const DD = try allocator.alloc(usize, B.len + 1);
+    defer allocator.free(DD);
+
+    const RR = try allocator.alloc(usize, B.len + 1);
+    defer allocator.free(RR);
+
+    const SS = try allocator.alloc(usize, B.len + 1);
+    defer allocator.free(SS);
+
+    var edits = std.ArrayList(Edit).init(allocator);
+    try adaptive_transform(A, B, CC, DD, RR, SS, g, g, &edits);
+    return edits;
+}
+
+fn adaptive_transform(
+    A: []const u8,
+    B: []const u8,
+    CC: []usize,
+    DD: []usize,
+    RR: []usize,
+    SS: []usize,
+    tb: usize,
+    te: usize,
+    edits: *std.ArrayList(Edit),
+) !void {
+    if (B.len == 0) {
+        if (A.len > 0) try edits.append(Edit{ .delete = A[0..] });
+    } else switch (A.len) {
+        0 => try edits.append(Edit{ .insert = B[0..] }),
+        1 => {
+            const default_cost = @min(tb, te) + h + (B.len * h + g);
+            var @"j*": usize = undefined;
+            var min_replace_cost: usize = std.math.maxInt(usize);
+            for (0..B.len) |j| {
+                const replace_cost = j * h + g + w(A[0], B[j]) + (B.len - j - 1) * h + g;
+                if (replace_cost < min_replace_cost) {
+                    min_replace_cost = replace_cost;
+                    @"j*" = j;
+                }
+            }
+
+            if (min_replace_cost < default_cost) {
+                if (@"j*" >= 1) try edits.append(Edit{ .insert = B[0..@"j*"] });
+                try edits.append(Edit{ .replace = B[@"j*" .. @"j*" + 1] });
+                if (B.len - @"j*" > 1) try edits.append(Edit{ .insert = B[@"j*" + 1 ..] });
+            } else {
+                try edits.append(Edit{ .insert = B[0..] });
+            }
+        },
+        else => {
+            const @"i*" = A.len / 2;
+            _ = adaptive_cost(A[0..@"i*"], B, CC, DD, Phase.forward, tb);
+            _ = adaptive_cost(A[@"i*"..], B, RR, SS, Phase.backward, te);
+            var @"j*": usize = undefined;
+            var is_type1: bool = undefined;
+            var min_cost: usize = std.math.maxInt(usize);
+            for (0..B.len + 1) |j| {
+                const type1_cost = CC[j] + RR[B.len - j];
+                const type2_cost = DD[j] + SS[B.len - j] - g;
+                if (@min(type1_cost, type2_cost) < min_cost) {
+                    min_cost = @min(type1_cost, type2_cost);
+                    @"j*" = j;
+                    is_type1 = type1_cost <= type2_cost;
+                }
+            }
+
+            if (is_type1) {
+                try adaptive_transform(A[0..@"i*"], B[0..@"j*"], CC, DD, RR, SS, tb, g, edits);
+                try adaptive_transform(A[@"i*"..], B[@"j*"..], CC, DD, RR, SS, g, te, edits);
+            } else {
+                try adaptive_transform(A[0 .. @"i*" - 1], B[0..@"j*"], CC, DD, RR, SS, tb, 0, edits);
+                try edits.append(Edit{ .delete = A[@"i*" .. @"i*" + 2] });
+                try adaptive_transform(A[@"i*" + 1 ..], B[@"j*" + 1 ..], CC, DD, RR, SS, 0, te, edits);
+            }
+        },
+    }
+}
