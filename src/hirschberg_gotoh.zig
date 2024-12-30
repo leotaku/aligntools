@@ -153,3 +153,40 @@ fn adaptive_transform(
         },
     }
 }
+
+pub fn print_edits(allocator: std.mem.Allocator, edits: []const Edit) !void {
+    var A_with_edits = std.ArrayList(u8).init(allocator);
+    defer A_with_edits.deinit();
+    var B_with_edits = std.ArrayList(u8).init(allocator);
+    defer B_with_edits.deinit();
+    var edit_vis = std.ArrayList(u8).init(allocator);
+    defer edit_vis.deinit();
+    for (edits) |edit| {
+        switch (edit) {
+            .insert => |e| {
+                try edit_vis.append('i');
+                for (1..e.len) |_| try edit_vis.append('+');
+                try A_with_edits.appendSlice(e);
+                for (0..e.len) |_| try B_with_edits.append('-');
+            },
+            .delete => |e| {
+                try edit_vis.append('d');
+                for (1..e.len) |_| try edit_vis.append('+');
+                for (0..e.len) |_| try A_with_edits.append('-');
+                try B_with_edits.appendSlice(e);
+            },
+            .replace => |e| {
+                try edit_vis.append('r');
+                for (1..e.len) |_| try edit_vis.append('+');
+                for (0..e.len) |_| try A_with_edits.append('?');
+                try B_with_edits.appendSlice(e);
+            },
+        }
+    }
+
+    std.debug.print("{s}\n{s}\n{s}\n", .{
+        A_with_edits.items,
+        edit_vis.items,
+        B_with_edits.items,
+    });
+}
