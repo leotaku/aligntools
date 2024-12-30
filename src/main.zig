@@ -1,5 +1,6 @@
 const std = @import("std");
 const PerfectHash = @import("perfect_hash.zig").PerfectHash;
+const hirschberg_gotoh = @import("hirschberg_gotoh.zig");
 
 const example_keys: [10][]const u8 = .{
     "foo",
@@ -25,4 +26,7 @@ pub fn main() !void {
     for (example_keys) |key| {
         std.debug.print("{s} => {d}\n", .{ key, ph.hash(key) });
     }
+
+    const cost = try hirschberg_gotoh.cost(allocator, "aaa", "aaa");
+    std.debug.print("cost: {d}\n", .{cost});
 }
