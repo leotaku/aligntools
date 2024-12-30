@@ -17,28 +17,28 @@ pub fn cost(allocator: std.mem.Allocator, A: []const u8, B: []const u8) !usize {
     defer allocator.free(DD);
 
     var t: usize = g;
-    for (1..B.len + 1) |j| {
-        CC[j] = t + h;
+    for (0..B.len) |j| {
+        CC[j + 1] = t + h;
         t = t + h;
-        DD[j] = t + g;
+        DD[j + 1] = t + g;
     }
 
     var e: usize = 0;
     var c: usize = 0;
     var s: usize = 0;
     t = g;
-    for (1..A.len + 1) |i| {
+    for (0..A.len) |i| {
         s = CC[0];
         t = t + h;
         c = t;
         CC[0] = t;
         e = t + g;
-        for (1..B.len + 1) |j| {
+        for (0..B.len) |j| {
             e = @min(e, c + g) + h;
-            DD[j] = @min(DD[j], CC[j] + g) + h;
-            c = @min(DD[j], e, s + w(A[i - 1], B[j - 1]));
-            s = CC[j];
-            CC[j] = c;
+            DD[j + 1] = @min(DD[j + 1], CC[j + 1] + g) + h;
+            c = @min(DD[j + 1], e, s + w(A[i], B[j]));
+            s = CC[j + 1];
+            CC[j + 1] = c;
         }
     }
 
