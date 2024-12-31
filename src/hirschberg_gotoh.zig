@@ -101,6 +101,7 @@ pub fn transform(allocator: std.mem.Allocator, A: []const u8, B: []const u8) !st
     defer allocator.free(SS);
 
     var edits = std.ArrayList(Edit).init(allocator);
+    errdefer edits.deinit();
     try adaptive_transform(A, B, CC, DD, RR, SS, g, g, &edits);
     return edits;
 }
