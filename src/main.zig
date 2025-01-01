@@ -27,6 +27,13 @@ pub fn main() !void {
         std.debug.print("{s} => {d}\n", .{ key, ph.hash(key) });
     }
 
-    const cost = try hirschberg_gotoh.cost(allocator, "aaa", "aaa");
+    const A = "dddddadcd";
+    const B = "0adcd";
+
+    const cost = try hirschberg_gotoh.cost(allocator, A, B);
     std.debug.print("cost: {d}\n", .{cost});
+
+    const edits = try hirschberg_gotoh.transform(allocator, A, B);
+    defer edits.deinit();
+    try hirschberg_gotoh.write_edits(std.io.getStdOut().writer(), edits.items);
 }
