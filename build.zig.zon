@@ -1,0 +1,6 @@
+.{
+    .name = "aligntools",
+    .version = "0.0.0",
+    .paths = .{""},
+    .dependencies = .{},
+}
