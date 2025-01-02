@@ -3,7 +3,7 @@ const std = @import("std");
 const g = 0;
 const h = 1;
 
-fn w(a: u8, b: u8) usize {
+inline fn w(a: u8, b: u8) usize {
     return @intFromBool(a != b);
 }
 
