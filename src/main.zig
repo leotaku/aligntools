@@ -4,8 +4,8 @@ const hirschberg_gotoh = @import("hirschberg_gotoh.zig");
 
 const Command = struct {
     const help =
-        \\Usage: aligntools [OPTIONS] A B
-        \\Align sections in given files.
+        \\Usage: align [OPTIONS] A B
+        \\Perform optimal alignment of arbitrary sequences.
         \\
         \\  -s, --split   Split input on the given sequence
         \\  -e, --empty   Character to serve as the empty marker
