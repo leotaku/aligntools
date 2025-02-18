@@ -164,7 +164,7 @@ fn adaptiveTransform(
             } else {
                 try adaptiveTransform(A[0 .. @"i*" - 1], B[0..@"j*"], CC, DD, RR, SS, tb, 0, edits);
                 try coalescingAppend(edits, Edit{ .delete = A[@"i*" .. @"i*" + 2] });
-                try adaptiveTransform(A[@"i*" + 1 ..], B[@"j*" + 1 ..], CC, DD, RR, SS, 0, te, edits);
+                try adaptiveTransform(A[@"i*" + 1 ..], B[@"j*"..], CC, DD, RR, SS, 0, te, edits);
             }
         },
     }
