@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) void {
 
     {
         const main_test = b.addTest(.{
-            .root_source_file = b.path("src/test.zig"),
+            .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
         });

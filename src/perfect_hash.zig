@@ -96,3 +96,31 @@ pub const PerfectHash = struct {
         return @intCast(D.final() % self.m);
     }
 };
+
+test "no collisions" {
+    const keys: [10][]const u8 = .{
+        "foo",
+        "bar",
+        "baz",
+        "boo",
+        "bat",
+        "bart",
+        "fart",
+        "laissez-faire",
+        "miscellaneous",
+        "robot",
+    };
+
+    var ph = try PerfectHash.build(std.testing.allocator, &keys);
+    defer ph.deinit();
+
+    var collisions = std.ArrayList(bool).init(std.testing.allocator);
+    defer collisions.deinit();
+    try collisions.appendNTimes(false, ph.m);
+
+    for (keys) |key| {
+        const hash = ph.hash(key);
+        try std.testing.expect(!collisions.items[hash]);
+        collisions.items[hash] = true;
+    }
+}

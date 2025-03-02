@@ -190,3 +190,11 @@ pub fn writeEdits(writer: anytype, edits: []const Edit) !void {
     };
     try writer.writeByte('\n');
 }
+
+test "correct distance" {
+    const A = "dddddadcd";
+    const B = "0adcd";
+
+    const distance = try cost(std.testing.allocator, A, B);
+    try std.testing.expectEqual(5, distance);
+}
