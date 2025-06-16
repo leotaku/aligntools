@@ -28,5 +28,5 @@ While there is a breadth of quality software packages for sequence alignment, th
 [MIT](./LICENSE) © 2024-2025 Leo Gaskin
 
 [^1]: SeqAn3 with its [Alphabets](https://docs.seqan.de/seqan3/main_user/tutorial_alphabets.html) feature is an exception to this, and will most likely be a better choice for most applications. Future versions of this package might use SeqAn3 routines for their scoring function.
-[^2]: SeqAn3's [`align_pairwise`](https://docs.seqan.de/seqan3/main_user/group__alignment__pairwise.html#gadaa2ea56040a15d60f41ed022dd47389) algorithm advertises O(N²) space complexity when computing alignments, though I find it hard to believe this would actually be the case.
+[^2]: SeqAn3's [`align_pairwise`](https://docs.seqan.de/seqan3/main_user/group__alignment__pairwise.html#gadaa2ea56040a15d60f41ed022dd47389) algorithm advertises O(N²) space complexity when computing alignments, though I find it hard to believe that this is the best the library can offer. There might be an O(N) space aligorithm somewhere in there, making this project largely obsolete.
 
